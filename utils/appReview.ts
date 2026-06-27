@@ -3,7 +3,7 @@ import { format, subDays } from 'date-fns';
 import { Storage, STORAGE_KEYS } from '@/utils/storage';
 
 /** Android package id — keep in sync with app.json → android.package. */
-export const ANDROID_PACKAGE = 'com.mycircle.app';
+export const ANDROID_PACKAGE = 'com.lushapp.mycircle';
 export const PLAY_STORE_URL = `https://play.google.com/store/apps/details?id=${ANDROID_PACKAGE}`;
 
 /** Consecutive days of use before we ask for a rating. */

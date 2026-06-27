@@ -1,4 +1,4 @@
-import InfoPage, { FAQItem } from '@/components/ui/InfoPage';
+import InfoPage, { FAQItem, Section, Paragraph, Bullet } from '@/components/ui/InfoPage';
 
 const FAQS = [
   {
@@ -44,6 +44,12 @@ export default function HelpScreen() {
       {FAQS.map((f) => (
         <FAQItem key={f.question} question={f.question} answer={f.answer} />
       ))}
+
+      <Section title="Contact & support">
+        <Paragraph>Need a hand or have a question? We're happy to help.</Paragraph>
+        <Bullet>General inquiries & support: hello@lush-app.com</Bullet>
+        <Bullet>Headquarters: Hitech City, Hyderabad, Telangana 500085, India</Bullet>
+      </Section>
     </InfoPage>
   );
 }

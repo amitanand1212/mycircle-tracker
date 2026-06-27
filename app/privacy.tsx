@@ -12,8 +12,8 @@ export default function PrivacyScreen() {
 
       <Section title="What we collect">
         <Paragraph>
-          We do not require you to create an account, and we do not collect personal information on our
-          servers. The data you enter is stored locally on your device, including:
+          We do not require you to create an account, and we do not collect your health information on
+          our servers. The data you enter is stored locally on your device, including:
         </Paragraph>
         <Bullet>Your cycle details (last period date, cycle and period length)</Bullet>
         <Bullet>Daily logs such as symptoms, mood and notes</Bullet>
@@ -22,8 +22,22 @@ export default function PrivacyScreen() {
 
       <Section title="How your data is used">
         <Paragraph>
-          Your data is used only on your device to calculate predictions, show insights and send the
-          reminders you enable. It is not sold, shared or uploaded to any external server by us.
+          Your health data — your cycle details, daily logs and preferences — is used only on your
+          device to calculate predictions, show insights and send the reminders you enable. We never
+          sell it, and we do not upload it to our own servers.
+        </Paragraph>
+      </Section>
+
+      <Section title="Advertising">
+        <Paragraph>
+          My Circle is free and supported by ads served through Google AdMob. To show ads, the AdMob
+          service may collect limited information such as your device's advertising identifier, general
+          device information and approximate location. This data is handled by Google, not us, and is
+          never linked to the health information you log in the app.
+        </Paragraph>
+        <Paragraph>
+          You can learn more in Google's Privacy Policy at policies.google.com/privacy, and you can
+          reset or limit your advertising identifier any time in your device's privacy settings.
         </Paragraph>
       </Section>
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, Animated, Pressable } from 'react-native';
+import { View, Text, Animated, Pressable, AppState } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -59,16 +59,32 @@ export default function LockScreen({ onUnlock }: Props) {
   const [authing, setAuthing] = useState(false);
 
   const shake = useRef(new Animated.Value(0)).current;
+  // Guards against overlapping prompts. A ref (not state) so the check is
+  // synchronous and immune to React's async state batching.
+  const promptInFlight = useRef(false);
   const isBiometric = settings.appLockType === 'biometric';
   const insets = useSafeAreaInsets();
   const greetingName = settings.name?.trim();
 
+  // Trigger the biometric prompt only while the app is actually in the
+  // foreground. The lock screen gets mounted *as the app is backgrounding*
+  // (RootLayout flips it locked on the background/inactive event), so a plain
+  // on-mount prompt fires before the activity is resumed and the OS silently
+  // drops it — that's why re-unlock failed after a background/lock. We instead
+  // authenticate when the app is/returns to 'active'.
+  const authRef = useRef<() => void>(() => {});
   useEffect(() => {
-    if (isBiometric) authenticate();
-  }, []);
+    if (!isBiometric) return;
+    if (AppState.currentState === 'active') authRef.current();
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') authRef.current();
+    });
+    return () => sub.remove();
+  }, [isBiometric]);
 
   const authenticate = async () => {
-    if (authing) return;
+    if (promptInFlight.current) return;
+    promptInFlight.current = true;
     setAuthing(true);
     try {
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
@@ -93,7 +109,7 @@ export default function LockScreen({ onUnlock }: Props) {
         onUnlock();
       } else if (errCode === 'lockout' || errCode === 'lockout_permanent') {
         setBioStatus('Too many attempts. Try again later.');
-      } else if (errCode === 'user_cancel' || errCode === 'system_cancel') {
+      } else if (errCode === 'user_cancel' || errCode === 'system_cancel' || errCode === 'app_cancel') {
         setBioStatus('Tap to unlock');
       } else {
         setBioStatus('Could not verify. Tap to try again.');
@@ -101,9 +117,13 @@ export default function LockScreen({ onUnlock }: Props) {
     } catch (e) {
       setBioStatus('Authentication error. Tap to try again.');
     } finally {
+      promptInFlight.current = false;
       setAuthing(false);
     }
   };
+
+  // Keep the AppState effect pointing at the latest closure.
+  authRef.current = authenticate;
 
   const triggerShake = () => {
     Animated.sequence([

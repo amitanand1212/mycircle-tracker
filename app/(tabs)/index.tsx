@@ -8,6 +8,7 @@ import { addDays, format, parseISO } from 'date-fns';
 import Svg, { Circle } from 'react-native-svg';
 import BottomSheet from '@/components/ui/BottomSheet';
 import LogEntryForm from '@/components/history/LogEntryForm';
+import AdBanner from '@/components/AdBanner';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useCycleStore } from '@/store/cycleStore';
 import { useLogStore } from '@/store/logStore';
@@ -324,6 +325,9 @@ export default function DashboardScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Anchored ad banner — sits above the tab bar on the Today screen */}
+      <AdBanner />
 
       <BottomSheet visible={sheetVisible} onClose={() => setSheetVisible(false)} snapHeight={640}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16 }}>

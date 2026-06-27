@@ -8,13 +8,14 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
+      "bundleIdentifier": "com.lushapp.mycircle",
       "supportsTablet": false,
       "infoPlist": {
         "NSFaceIDUsageDescription": "Use Face ID to unlock My Circle"
       }
     },
     "android": {
-      "package": "com.mycircle.app",
+      "package": "com.lushapp.mycircle",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -51,7 +52,22 @@
           "color": "#A855F7"
         }
       ],
-      "expo-secure-store"
-    ]
+      "expo-secure-store",
+      "expo-font",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-7760368408975742~9634343248",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+        }
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d58451a1-9a79-4ccd-849b-f75644a67da1"
+      }
+    },
+    "owner": "manishmanny1212"
   }
 }

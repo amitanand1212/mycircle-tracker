@@ -11,7 +11,7 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { COLORS, FONT } from '@/constants/theme';
 
 const TITLE = '#1E1B4B';
-const SUGGESTIONS = ['Priya', 'Ananya', 'My Diary', 'Me'];
+const SUGGESTIONS = ['Emma', 'Sophia', 'My Diary', 'Me'];
 
 export default function NameScreen() {
   const router = useRouter();

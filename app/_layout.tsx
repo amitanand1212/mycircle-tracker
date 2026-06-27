@@ -12,6 +12,8 @@ import {
   Poppins_600SemiBold,
   Poppins_700Bold,
 } from '@expo-google-fonts/poppins';
+import Constants from 'expo-constants';
+import mobileAds from 'react-native-google-mobile-ads';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useLogStore } from '@/store/logStore';
 import { useCycleStore } from '@/store/cycleStore';
@@ -45,6 +47,15 @@ export default function RootLayout() {
     // Register the notification handler + Android channel from app launch,
     // so reminders display even if the user never opens Settings this session.
     ensureAndroidChannel();
+  }, []);
+
+  // Initialize the Google Mobile Ads SDK once at launch. Skipped in Expo Go
+  // (no native module there); failures are non-fatal — ads are non-essential.
+  useEffect(() => {
+    if (Constants.appOwnership === 'expo') return;
+    try {
+      mobileAds().initialize().catch(() => {});
+    } catch {}
   }, []);
 
   useEffect(() => {
