@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,11 +14,15 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useCycleStore } from '@/store/cycleStore';
 import { useLogStore } from '@/store/logStore';
 import { toISODateString, todayISO } from '@/utils/dateHelpers';
+import { maybeShowInterstitialAfterSheet } from '@/utils/interstitial';
 import { COLORS, FONT, CARD_SHADOW } from '@/constants/theme';
 import type { CyclePhase } from '@/types';
 
-const { width } = Dimensions.get('window');
 const TITLE = '#1E1B4B';
+/** Horizontal padding around the day grid, matched by the weekday header. */
+const GRID_PADDING = 32;
+/** Day circle on a comfortable screen; shrinks to fit narrower ones. */
+const MAX_DAY_SIZE = 42;
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const PHASE_STYLE: Record<Exclude<CyclePhase, 'normal'>, { bg: string; text: string; dot: string }> = {
@@ -59,6 +63,21 @@ export default function CalendarScreen() {
   const [displayMonth, setDisplayMonth] = useState(startOfMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState(todayISO());
   const [sheetVisible, setSheetVisible] = useState(false);
+
+  // Fires when the day sheet is dismissed, not when it opens — a full-screen
+  // ad launching over a sheet mid-animation is what broke the log sheet before.
+  const closeDaySheet = () => {
+    setSheetVisible(false);
+    maybeShowInterstitialAfterSheet();
+  };
+
+  // Seven columns have to divide the *live* width — a value captured at module
+  // load is wrong after a rotation or on a folding device. The day circle is
+  // then clamped to its column, since a fixed 42dp overflowed the ~41dp columns
+  // of a 320dp-wide phone.
+  const { width } = useWindowDimensions();
+  const cellWidth = (width - GRID_PADDING) / 7;
+  const daySize = Math.min(MAX_DAY_SIZE, Math.floor(cellWidth) - 2);
 
   const entryDates = useMemo(() => new Set(entries.map((e) => e.date)), [entries]);
 
@@ -107,9 +126,9 @@ export default function CalendarScreen() {
         key={iso}
         activeOpacity={0.7}
         onPress={() => openDay(d)}
-        style={{ width: (width - 32) / 7, alignItems: 'center', paddingVertical: 6 }}
+        style={{ width: cellWidth, alignItems: 'center', paddingVertical: 6 }}
       >
-        <View style={{ width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center',
+        <View style={{ width: daySize, height: daySize, borderRadius: daySize / 2, alignItems: 'center', justifyContent: 'center',
           backgroundColor: ps ? ps.bg : 'transparent',
           borderWidth: selected ? 2 : 0,
           borderColor: selected ? COLORS.primary : 'transparent',
@@ -169,7 +188,7 @@ export default function CalendarScreen() {
     : 'A regular day in your cycle.';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF1F6' }}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: '#FBF1F6' }}>
       {/* Header */}
       <View style={{ alignItems: 'center', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 }}>
         <Text style={{ fontFamily: FONT.bold, fontSize: 24, color: TITLE }}>Calendar</Text>
@@ -202,7 +221,7 @@ export default function CalendarScreen() {
         {/* Weekday header */}
         <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginBottom: 4 }}>
           {WEEKDAYS.map((w) => (
-            <Text key={w} style={{ width: (width - 32) / 7, textAlign: 'center', fontFamily: FONT.medium, fontSize: 12, color: COLORS.textSecondary }}>{w}</Text>
+            <Text key={w} style={{ width: cellWidth, textAlign: 'center', fontFamily: FONT.medium, fontSize: 12, color: COLORS.textSecondary }}>{w}</Text>
           ))}
         </View>
         <View style={{ height: 1, backgroundColor: '#EFE3EC', marginHorizontal: 16, marginBottom: 4 }} />
@@ -320,7 +339,7 @@ export default function CalendarScreen() {
         )}
       </ScrollView>
 
-      <BottomSheet visible={sheetVisible} onClose={() => setSheetVisible(false)} snapHeight={640}>
+      <BottomSheet visible={sheetVisible} onClose={closeDaySheet} snapHeight={640}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16 }}>
           <Text style={{ fontFamily: FONT.bold, fontSize: 16, color: TITLE, marginBottom: 12 }}>
             {selectedDate ? format(parseISO(selectedDate), 'EEEE, d MMM yyyy') : ''}
@@ -328,8 +347,8 @@ export default function CalendarScreen() {
           <LogEntryForm
             key={selectedDate}
             date={selectedDate}
-            onSave={() => setSheetVisible(false)}
-            onClose={() => setSheetVisible(false)}
+            onSave={closeDaySheet}
+            onClose={closeDaySheet}
           />
         </ScrollView>
       </BottomSheet>

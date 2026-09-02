@@ -8,11 +8,13 @@ import { addDays, format, parseISO } from 'date-fns';
 import Svg, { Circle } from 'react-native-svg';
 import BottomSheet from '@/components/ui/BottomSheet';
 import LogEntryForm from '@/components/history/LogEntryForm';
+import AdBanner from '@/components/AdBanner';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useCycleStore } from '@/store/cycleStore';
 import { useLogStore } from '@/store/logStore';
 import { formatShortDate, formatDisplayDate, todayISO } from '@/utils/dateHelpers';
-import { recordDailyOpen, shouldAskForReview, setReviewStatus, snoozeReview, openPlayStore } from '@/utils/appReview';
+import { recordDailyOpen, shouldAskForReview, setReviewStatus, requestInAppReview } from '@/utils/appReview';
+import { maybeShowInterstitialAfterSheet } from '@/utils/interstitial';
 import { COLORS, FONT, CARD_SHADOW } from '@/constants/theme';
 
 const TITLE = '#1E1B4B';
@@ -69,20 +71,25 @@ export default function DashboardScreen() {
   const [sheetVisible, setSheetVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState(todayISO());
 
-  // Count daily usage and, after a few days, invite the user to rate the app.
+  // Dismissing the day sheet is a real transition point, and it covers both
+  // "logged something" and "just looked". The ad waits for the close animation.
+  const closeLogSheet = () => {
+    setSheetVisible(false);
+    maybeShowInterstitialAfterSheet();
+  };
+
+  // Count daily usage and, after a few days, ask for a rating.
+  //
+  // Play's in-app review sheet is shown directly — no custom "Enjoying the app?"
+  // dialog first, because Google's policy forbids asking the user anything
+  // before or while the rating card is presented. The sheet also can't report
+  // what the user did, so we simply record that we asked and never ask again.
   useEffect(() => {
-    const streak = recordDailyOpen();
-    if (!shouldAskForReview(streak)) return;
+    const daysUsed = recordDailyOpen();
+    if (!shouldAskForReview(daysUsed)) return;
     const t = setTimeout(() => {
-      Alert.alert(
-        'Enjoying My Circle? 💜',
-        "You've been tracking with us for a few days! A quick rating on the Play Store really helps us grow. 🌸",
-        [
-          { text: 'No thanks', style: 'cancel', onPress: () => setReviewStatus('dismissed') },
-          { text: 'Maybe later', onPress: () => snoozeReview() },
-          { text: 'Rate Now ⭐', onPress: () => { setReviewStatus('rated'); openPlayStore(); } },
-        ],
-      );
+      setReviewStatus('rated');
+      requestInAppReview();
     }, 1500);
     return () => clearTimeout(t);
   }, []);
@@ -147,7 +154,7 @@ export default function DashboardScreen() {
   ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFF8FC' }}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: '#FFF8FC' }}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
 
         {/* ── Header ── */}
@@ -303,6 +310,8 @@ export default function DashboardScreen() {
           </View>
         </View>
 
+        <AdBanner />
+
         {/* ── Quick Actions ── */}
         <View style={{ paddingHorizontal: 24 }}>
           <Text style={{ fontFamily: FONT.bold, fontSize: 17, color: COLORS.textPrimary, marginBottom: 14 }}>Quick Actions</Text>
@@ -325,7 +334,7 @@ export default function DashboardScreen() {
         </View>
       </ScrollView>
 
-      <BottomSheet visible={sheetVisible} onClose={() => setSheetVisible(false)} snapHeight={640}>
+      <BottomSheet visible={sheetVisible} onClose={closeLogSheet} snapHeight={640}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16 }}>
           <Text style={{ fontFamily: FONT.bold, fontSize: 16, color: TITLE, marginBottom: 12 }}>
             {selectedDate ? format(parseISO(selectedDate), 'EEEE, d MMM yyyy') : ''}
@@ -333,8 +342,8 @@ export default function DashboardScreen() {
           <LogEntryForm
             key={selectedDate}
             date={selectedDate}
-            onSave={() => setSheetVisible(false)}
-            onClose={() => setSheetVisible(false)}
+            onSave={closeLogSheet}
+            onClose={closeLogSheet}
           />
         </ScrollView>
       </BottomSheet>

@@ -3,8 +3,8 @@
   "compilerOptions": {
     "strict": true,
     "skipLibCheck": true,
-    "ignoreDeprecations": "5.0",
-    "baseUrl": ".",
+    // No `baseUrl`: TypeScript 6 deprecates it, and both tsc and Expo's Metro
+    // resolver fall back to resolving `paths` relative to this file.
     "paths": {
       "@/*": [
         "./*"

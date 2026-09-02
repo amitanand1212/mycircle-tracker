@@ -5,6 +5,7 @@ import { AppState, type AppStateStatus } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import {
   useFonts,
   Poppins_400Regular,
@@ -12,8 +13,8 @@ import {
   Poppins_600SemiBold,
   Poppins_700Bold,
 } from '@expo-google-fonts/poppins';
-import Constants from 'expo-constants';
-import mobileAds from 'react-native-google-mobile-ads';
+import { getAdsModule } from '@/utils/ads';
+import { preloadInterstitial } from '@/utils/interstitial';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useLogStore } from '@/store/logStore';
 import { useCycleStore } from '@/store/cycleStore';
@@ -49,12 +50,14 @@ export default function RootLayout() {
     ensureAndroidChannel();
   }, []);
 
-  // Initialize the Google Mobile Ads SDK once at launch. Skipped in Expo Go
+  // Initialize the Google Mobile Ads SDK once at launch. No-op in Expo Go
   // (no native module there); failures are non-fatal — ads are non-essential.
   useEffect(() => {
-    if (Constants.appOwnership === 'expo') return;
+    const ads = getAdsModule();
+    if (!ads) return;
     try {
-      mobileAds().initialize().catch(() => {});
+      // Preload only after the SDK is up, so the first request isn't wasted.
+      ads.default().initialize().then(preloadInterstitial).catch(() => {});
     } catch {}
   }, []);
 
@@ -107,6 +110,7 @@ export default function RootLayout() {
   if (settings.onboardingComplete && settings.appLockEnabled && !isUnlocked) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
+        <StatusBar style="dark" />
         <LockScreen onUnlock={() => setIsUnlocked(true)} />
       </GestureHandlerRootView>
     );
@@ -114,6 +118,10 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      {/* Android draws under the status bar now that edge-to-edge is
+          mandatory, and every screen here is light — so the icons have to be
+          dark or they vanish into the background. */}
+      <StatusBar style="dark" />
       <Stack
         screenOptions={{
           headerShown: false,

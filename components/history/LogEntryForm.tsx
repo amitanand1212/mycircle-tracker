@@ -1,4 +1,4 @@
-import { useState, forwardRef, useImperativeHandle } from 'react';
+import { useState, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Path } from 'react-native-svg';
@@ -89,7 +89,12 @@ const LogEntryForm = forwardRef<LogEntryFormHandle, Props>(
     const getEntryByDate = useLogStore((s) => s.getEntryByDate);
     const addEntry = useLogStore((s) => s.addEntry);
     const updateEntry = useLogStore((s) => s.updateEntry);
-    const symptomOptions = useSymptomsStore((s) => s.symptoms.filter((x) => x.enabled));
+    // Select the stored array, then derive. Filtering *inside* the selector
+    // hands zustand's useSyncExternalStore a brand-new array on every call, so
+    // React never sees a stable snapshot and re-renders until it bails out with
+    // "Maximum update depth exceeded".
+    const allSymptoms = useSymptomsStore((s) => s.symptoms);
+    const symptomOptions = useMemo(() => allSymptoms.filter((x) => x.enabled), [allSymptoms]);
     const existing = getEntryByDate(date);
 
     const [flow, setFlow] = useState<FlowType | null>(existing?.flow ?? null);

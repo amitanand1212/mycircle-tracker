@@ -1,6 +1,8 @@
-import { memo, useMemo, useState } from 'react';
+import { memo, useMemo, useState, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { maybeShowInterstitial } from '@/utils/interstitial';
 import { LinearGradient } from 'expo-linear-gradient';
 import { PieChart } from 'react-native-gifted-charts';
 import { Ionicons } from '@expo/vector-icons';
@@ -50,6 +52,12 @@ export default function InsightsScreen() {
   const cycleData = useCycleStore((s) => s.cycleData);
   const [tab] = useState<TabKey>('Overview');
 
+  // Opening this screen is a navigation transition, which is where AdMob allows
+  // interstitials. The frequency cap in utils/interstitial.ts decides whether
+  // anything actually shows, so tab-hopping can't spam ads.
+  useFocusEffect(useCallback(() => { maybeShowInterstitial(); }, []));
+
+
   const showPremiumSoon = () =>
     Alert.alert(
       'Premium ✨ Coming Soon',
@@ -92,7 +100,7 @@ export default function InsightsScreen() {
   const isRegular = settings.cycleLength >= 21 && settings.cycleLength <= 35;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF1F6' }}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: '#FBF1F6' }}>
       {/* Header */}
       <View style={{ alignItems: 'center', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 }}>
         <Text style={{ fontFamily: FONT.bold, fontSize: 23, color: TITLE }}>Insights ✨</Text>

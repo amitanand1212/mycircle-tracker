@@ -1,12 +1,13 @@
-import { memo, useState, useMemo } from 'react';
+import { memo, useState, useMemo, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import {
   format, parseISO, differenceInDays, isSameMonth, startOfMonth, endOfMonth, eachDayOfInterval,
 } from 'date-fns';
+import { maybeShowInterstitial, maybeShowInterstitialAfterSheet } from '@/utils/interstitial';
 import BottomSheet from '@/components/ui/BottomSheet';
 import LogEntryForm from '@/components/history/LogEntryForm';
 import { useLogStore } from '@/store/logStore';
@@ -52,6 +53,16 @@ export default function HistoryScreen() {
   const deleteEntry = useLogStore((s) => s.deleteEntry);
   const settings = useSettingsStore((s) => s.settings);
   const [editEntry, setEditEntry] = useState<LogEntry | null>(null);
+
+  // Opening this screen is a navigation transition, which is where AdMob allows
+  // interstitials. The frequency cap in utils/interstitial.ts decides whether
+  // anything actually shows, so tab-hopping can't spam ads.
+  useFocusEffect(useCallback(() => { maybeShowInterstitial(); }, []));
+
+  const closeEditSheet = () => {
+    setEditEntry(null);
+    maybeShowInterstitialAfterSheet();
+  };
 
   const grouped = useMemo(() => {
     const groups: Record<string, LogEntry[]> = {};
@@ -178,7 +189,7 @@ export default function HistoryScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF4FA' }}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: '#FBF4FA' }}>
       {/* Header */}
       <View style={{ alignItems: 'center', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 }}>
         <Text style={{ fontFamily: FONT.bold, fontSize: 24, color: TITLE }}>History</Text>
@@ -240,7 +251,7 @@ export default function HistoryScreen() {
         )}
       </ScrollView>
 
-      <BottomSheet visible={!!editEntry} onClose={() => setEditEntry(null)} snapHeight={640}>
+      <BottomSheet visible={!!editEntry} onClose={closeEditSheet} snapHeight={640}>
         {editEntry && (
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16 }}>
             <Text style={{ fontFamily: FONT.bold, fontSize: 16, color: TITLE, marginBottom: 12 }}>
@@ -249,8 +260,8 @@ export default function HistoryScreen() {
             <LogEntryForm
               key={editEntry.id}
               date={editEntry.date}
-              onSave={() => setEditEntry(null)}
-              onClose={() => setEditEntry(null)}
+              onSave={closeEditSheet}
+              onClose={closeEditSheet}
             />
           </ScrollView>
         )}

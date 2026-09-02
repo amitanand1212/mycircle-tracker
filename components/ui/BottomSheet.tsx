@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Dimensions, Modal, Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { Modal, Pressable, StyleSheet, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,13 +8,17 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+/** Never let a sheet grow past this share of the window, so the grab handle and
+ *  the backdrop tap target stay reachable on short screens. */
+const MAX_HEIGHT_RATIO = 0.85;
 
 interface Props {
   visible: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  /** Preferred height; clamped to {@link MAX_HEIGHT_RATIO} of the window. */
   snapHeight?: number;
   style?: ViewStyle;
 }
@@ -23,9 +27,21 @@ export default function BottomSheet({
   visible,
   onClose,
   children,
-  snapHeight = SCREEN_HEIGHT * 0.75,
+  snapHeight: preferredHeight,
   style,
 }: Props) {
+  // Read live rather than at module load: window height changes with rotation,
+  // split screen and folding devices, and a captured value strands the sheet.
+  const { height: windowHeight } = useWindowDimensions();
+  // The sheet is anchored to the bottom of an edge-to-edge screen, so its
+  // content would otherwise run underneath the system navigation bar.
+  const insets = useSafeAreaInsets();
+
+  const snapHeight = Math.min(
+    preferredHeight ?? windowHeight * 0.75,
+    windowHeight * MAX_HEIGHT_RATIO,
+  );
+
   const translateY      = useSharedValue(snapHeight);
   const backdropOpacity = useSharedValue(0);
   // Stay mounted through the close animation so it slides out smoothly.
@@ -86,6 +102,9 @@ export default function BottomSheet({
                 backgroundColor: '#FFFFFF',
                 borderTopLeftRadius: 24,
                 borderTopRightRadius: 24,
+                // Keeps the last row of content clear of the gesture pill or
+                // the three-button navigation bar.
+                paddingBottom: insets.bottom,
               },
               style,
             ]}

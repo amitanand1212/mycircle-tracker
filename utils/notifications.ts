@@ -1,21 +1,49 @@
-import * as Notifications from 'expo-notifications';
+import { isRunningInExpoGo } from 'expo';
 import { Platform } from 'react-native';
 import { addDays, parseISO } from 'date-fns';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound:  true,
-    shouldSetBadge:   false,
-    shouldShowBanner: true,
-    shouldShowList:   true,
-  }),
-});
+type NotificationsModule = typeof import('expo-notifications');
 
 const CHANNEL_ID = 'cycle-reminders';
 
+/**
+ * expo-notifications throws from its *module body* in Expo Go on Android — its
+ * device-push auto-registration side effect calls `addPushTokenListener`, and
+ * push support was pulled out of Expo Go back in SDK 53. A plain top-level
+ * import therefore takes down every route that reaches this file, so the module
+ * is required lazily behind a runtime check (same shape as the MMKV fallback in
+ * utils/storage.ts).
+ *
+ * Returns `null` in Expo Go, which makes every reminder below an inert no-op.
+ * Reminders need a development build or a release APK.
+ */
+let notificationsModule: NotificationsModule | null | undefined;
+
+function getNotifications(): NotificationsModule | null {
+  if (notificationsModule !== undefined) return notificationsModule;
+  try {
+    notificationsModule = isRunningInExpoGo()
+      ? null
+      : (require('expo-notifications') as NotificationsModule);
+    // Foreground presentation rules, registered as soon as the module loads.
+    notificationsModule?.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldPlaySound:  true,
+        shouldSetBadge:   false,
+        shouldShowBanner: true,
+        shouldShowList:   true,
+      }),
+    });
+  } catch {
+    notificationsModule = null;
+  }
+  return notificationsModule;
+}
+
 /** Android requires a channel for notifications to display (API 26+). Safe to call repeatedly. */
 export async function ensureAndroidChannel(): Promise<void> {
-  if (Platform.OS !== 'android') return;
+  const Notifications = getNotifications();
+  if (!Notifications || Platform.OS !== 'android') return;
   await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
     name: 'Cycle Reminders',
     importance: Notifications.AndroidImportance.HIGH,
@@ -25,6 +53,9 @@ export async function ensureAndroidChannel(): Promise<void> {
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
+  const Notifications = getNotifications();
+  if (!Notifications) return false;
+
   await ensureAndroidChannel();
 
   const current = await Notifications.getPermissionsAsync();
@@ -40,6 +71,8 @@ export async function requestNotificationPermission(): Promise<boolean> {
 
 /** Check whether notifications are already granted, without prompting the user. */
 export async function hasNotificationPermission(): Promise<boolean> {
+  const Notifications = getNotifications();
+  if (!Notifications) return false;
   const { status } = await Notifications.getPermissionsAsync();
   return status === 'granted';
 }
@@ -66,7 +99,8 @@ const LOG_TIME = { hour: 20, minute: 0 };
 
 /** Schedule a one-off reminder at a specific date (skipped if already past). */
 async function scheduleOnce(date: Date, title: string, body: string, type: string): Promise<void> {
-  if (date <= new Date()) return;
+  const Notifications = getNotifications();
+  if (!Notifications || date <= new Date()) return;
   await Notifications.scheduleNotificationAsync({
     content: { title, body, data: { type } },
     trigger: {
@@ -79,6 +113,8 @@ async function scheduleOnce(date: Date, title: string, body: string, type: strin
 
 /** Schedule a reminder that repeats every day at the given time. */
 async function scheduleDaily(hour: number, minute: number, title: string, body: string, type: string): Promise<void> {
+  const Notifications = getNotifications();
+  if (!Notifications) return;
   await Notifications.scheduleNotificationAsync({
     content: { title, body, data: { type } },
     trigger: {
@@ -111,6 +147,9 @@ export async function syncReminders({
   fertileStartDate,
   daysBefore = 2,
 }: ReminderConfig): Promise<void> {
+  const Notifications = getNotifications();
+  if (!Notifications) return;
+
   await ensureAndroidChannel();
   await Notifications.cancelAllScheduledNotificationsAsync();
 
@@ -178,11 +217,16 @@ export async function reconcileReminders(prefs: ReminderPrefs, cycle: CycleDates
 }
 
 export async function cancelAllReminders(): Promise<void> {
+  const Notifications = getNotifications();
+  if (!Notifications) return;
   await Notifications.cancelAllScheduledNotificationsAsync();
 }
 
 /** Fires a notification ~2s later so the user can confirm the pipeline works. */
 export async function sendTestNotification(): Promise<boolean> {
+  const Notifications = getNotifications();
+  if (!Notifications) return false;
+
   const granted = await requestNotificationPermission();
   if (!granted) return false;
 

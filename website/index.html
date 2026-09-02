@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Circle — Period &amp; Cycle Tracker</title>
+<meta name="description" content="My Circle is a private, local-only period and cycle tracker for Android. Your health data never leaves your device.">
+<link rel="icon" href="/favicon.png">
+<style>
+  :root {
+    --grad-start: #8B5CF6;
+    --grad-end:   #EC4899;
+    --primary:    #A855F7;
+    --bg:         #FFF8FC;
+    --surface:    #FFFFFF;
+    --border:     #F3E8FF;
+    --text:       #1F2937;
+    --muted:      #6B7280;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 56px 24px 72px; }
+  header { text-align: center; }
+  .icon {
+    width: 96px; height: 96px; border-radius: 24px; display: block; margin: 0 auto 20px;
+    box-shadow: 0 8px 30px rgba(168, 85, 247, 0.18);
+  }
+  h1 {
+    margin: 0 0 6px;
+    font-size: clamp(28px, 6vw, 38px);
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, var(--grad-start), var(--grad-end));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .tagline { margin: 0 0 28px; color: var(--muted); font-size: 17px; }
+  .cta {
+    display: inline-block; text-decoration: none; color: #fff; font-weight: 600;
+    padding: 13px 28px; border-radius: 28px;
+    background: linear-gradient(90deg, var(--grad-start), var(--grad-end));
+    box-shadow: 0 6px 20px rgba(236, 72, 153, 0.28);
+  }
+  .cards { margin: 48px 0 0; display: grid; gap: 14px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 18px; padding: 18px 20px;
+  }
+  .card h2 { margin: 0 0 4px; font-size: 16px; }
+  .card p  { margin: 0; color: var(--muted); font-size: 14.5px; }
+  footer {
+    margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border);
+    text-align: center; color: var(--muted); font-size: 14px;
+  }
+  footer a { color: var(--primary); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  .sep { margin: 0 8px; opacity: 0.5; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <img class="icon" src="/icon.png" alt="My Circle app icon" width="96" height="96">
+      <h1>My Circle</h1>
+      <p class="tagline">A private period &amp; cycle tracker for Android.</p>
+      <a class="cta" href="https://play.google.com/store/apps/details?id=com.lushapp.mycircle">Get it on Google Play</a>
+    </header>
+
+    <div class="cards">
+      <div class="card">
+        <h2>Private by default</h2>
+        <p>No account, no sign-up. Your cycle details and daily logs are stored on your device, encrypted at rest — never on our servers.</p>
+      </div>
+      <div class="card">
+        <h2>Predictions &amp; insights</h2>
+        <p>Period, fertile window and ovulation forecasts, with a calendar and history built from what you log.</p>
+      </div>
+      <div class="card">
+        <h2>Reminders that help</h2>
+        <p>Optional nudges before your period, on ovulation day, and for water and daily check-ins.</p>
+      </div>
+      <div class="card">
+        <h2>App lock</h2>
+        <p>Keep it to yourself with a PIN or your device's biometric unlock.</p>
+      </div>
+    </div>
+
+    <footer>
+      <a href="https://amitanand1212.github.io/mycircle-tracker/privacy.html">Privacy Policy</a>
+      <span class="sep">·</span>
+      <a href="https://play.google.com/store/apps/details?id=com.lushapp.mycircle">Google Play</a>
+      <p>© 2026 Lush App · com.lushapp.mycircle</p>
+    </footer>
+  </div>
+</body>
+</html>

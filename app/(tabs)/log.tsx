@@ -27,7 +27,7 @@ export default function LogScreen() {
     : format(selectedDate, 'd MMM yyyy');
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFF8FC' }}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: '#FFF8FC' }}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
 
         {/* ── Header ── */}
