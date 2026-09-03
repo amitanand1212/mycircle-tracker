@@ -68,6 +68,12 @@
         }
       ],
       [
+        "./plugins/withKotlinGradlePlugin",
+        {
+          "version": "2.3.21"
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "android": {
