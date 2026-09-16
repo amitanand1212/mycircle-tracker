@@ -83,7 +83,8 @@
             "extraProguardRules": "-keep class com.mrousavy.mmkv.** { *; }\n-keep class com.swmansion.reanimated.** { *; }\n-keep class com.swmansion.worklets.** { *; }\n-keep class io.invertase.googlemobileads.** { *; }\n-keep class com.google.android.gms.ads.** { *; }"
           }
         }
-      ]
+      ],
+      "./plugins/withR8Optimization"
     ],
     "extra": {
       "router": {},
