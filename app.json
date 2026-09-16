@@ -2,7 +2,7 @@
   "expo": {
     "name": "My Circle",
     "slug": "my-circle",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "scheme": "mycircle",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
